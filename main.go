@@ -1,7 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"os"
+	"path"
+
+	"github.com/spf13/pflag"
 )
 
 func main() {
@@ -10,5 +13,16 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(config)
+	daysAgo := pflag.IntP("ago", "a", 0, "")
+
+	pflag.Parse()
+
+	args := pflag.Args()
+
+	workingDir := WorkingDir(daysAgo)
+	workingPath := path.Join(config.StorageDir, workingDir)
+
+	os.MkdirAll(workingPath, 0744)
+
+	HandleCommand(args, workingPath)
 }
