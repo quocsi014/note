@@ -2,27 +2,21 @@ package main
 
 import (
 	"os"
-	"path"
-
-	"github.com/spf13/pflag"
 )
 
+var GlobalConfig *Config
+
 func main() {
-	config, err := LoadConfig()
+	var err error
+	GlobalConfig, err = LoadConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	daysAgo := pflag.IntP("ago", "a", 0, "")
+	args := os.Args
 
-	pflag.Parse()
-
-	args := pflag.Args()
-
-	workingDir := WorkingDir(daysAgo)
-	workingPath := path.Join(config.StorageDir, workingDir)
-
-	os.MkdirAll(workingPath, 0744)
-
-	HandleCommand(args, workingPath)
+	err = HandleCommand(args[1:])
+	if err != nil {
+		panic(err)
+	}
 }
