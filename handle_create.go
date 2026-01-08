@@ -12,10 +12,11 @@ import (
 	"github.com/spf13/pflag"
 )
 
-func Create(_args []string, workingPath string) error {
+func HandleCreate(_args []string, workingPath string) error {
 	fs := pflag.NewFlagSet("create", pflag.ContinueOnError)
 	title := fs.StringP("title", "t", "", "")
 	ext := fs.StringP("ext", "e", "", "")
+	c := fs.BoolP("c", "c", false, "")
 
 	fs.Parse(_args)
 
@@ -24,17 +25,20 @@ func Create(_args []string, workingPath string) error {
 		return err
 	}
 
-	err = openInEditor(GlobalConfig.Editor, filePath)
-	if err != nil {
-		return fmt.Errorf("editor failed: %w", err)
+	if !*c {
+		err = openInEditor(GlobalConfig.Editor, filePath)
+		if err != nil {
+			return fmt.Errorf("editor failed: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func CreateWithExt(_args []string, workingPath string, ext string) error {
+func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 	fs := pflag.NewFlagSet("create", pflag.ContinueOnError)
 	title := fs.StringP("title", "t", "", "")
+	c := fs.BoolP("c", "c", false, "")
 
 	fs.Parse(_args)
 
@@ -43,9 +47,11 @@ func CreateWithExt(_args []string, workingPath string, ext string) error {
 		return err
 	}
 
-	err = openInEditor(GlobalConfig.Editor, filePath)
-	if err != nil {
-		return fmt.Errorf("editor failed: %w", err)
+	if !*c {
+		err = openInEditor(GlobalConfig.Editor, filePath)
+		if err != nil {
+			return fmt.Errorf("editor failed: %w", err)
+		}
 	}
 
 	return nil
@@ -53,8 +59,7 @@ func CreateWithExt(_args []string, workingPath string, ext string) error {
 
 func create(workingPath, ext string, title string) (string, error) {
 	title = sanitizeFilename(title)
-	now := time.Now().Format("150405")
-	fileName := fmt.Sprintf("%s%s%s", noteFilePrefix, now, title)
+	fileName := fmt.Sprintf("%s%s", notePrefixNow(), title)
 	if ext != "" {
 		fileName = fmt.Sprintf("%s.%s", fileName, ext)
 	}
@@ -85,7 +90,7 @@ func sanitizeFilename(s string) string {
 	}
 
 	if result == "" {
-		result = "untitled"
+		result = untitled
 	}
 
 	return result
@@ -96,22 +101,26 @@ func openInEditor(editor, filePath string) error {
 	if len(parts) == 0 {
 		return fmt.Errorf("empty editor command")
 	}
-	
+
 	var cmd *exec.Cmd
 	if len(parts) > 1 {
 		cmd = exec.Command(parts[0], append(parts[1:], filePath)...)
 	} else {
 		cmd = exec.Command(parts[0], filePath)
 	}
-	
+
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	
-	// IMPORTANT: Cho phép editor control terminal
+
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid: false, // Không tạo process group mới
 	}
-	
+
 	return cmd.Run()
+}
+
+func notePrefixNow() string {
+	now := time.Now().Format("150405")
+	return fmt.Sprintf("note%s:", now)
 }

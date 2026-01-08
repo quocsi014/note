@@ -58,6 +58,7 @@ func NoteTypeFromExt(ext string) NoteType {
 }
 
 type Note struct {
+	Name       string
 	NoteType   NoteType
 	Title      string
 	ModifiedAt time.Time
@@ -84,13 +85,14 @@ func WorkingDir(daysAgo *int) string {
 }
 
 func HandleCommand(args []string) error {
-
 	fs := pflag.NewFlagSet("handle", pflag.ContinueOnError)
+	daysAgo := fs.IntP("ago", "a", 0, "")
 	fs.ParseErrorsAllowlist.UnknownFlags = true
 
-	daysAgo := pflag.IntP("ago", "a", 0, "")
-
-	fs.Parse(args)
+	err := fs.Parse(args)
+	if err != nil {
+		return err
+	}
 
 	workingDir := WorkingDir(daysAgo)
 	workingPath := path.Join(GlobalConfig.StorageDir, workingDir)
@@ -110,11 +112,13 @@ func HandleCommand(args []string) error {
 
 	switch cmd {
 	case "ls", "list":
-		ListNote(workingPath)
+		return HandleListNote(workingPath)
 	case "create":
-		Create(args, workingPath)
+		return HandleCreate(args, workingPath)
 	case "spec-create":
-		CreateWithExt(args, workingPath, args[0])
+		return HandleCreateWithExt(args, workingPath, args[0])
+	case "open":
+		return HandleOpen(args[1:], workingPath)
 	}
 
 	return nil
