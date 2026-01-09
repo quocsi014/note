@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -20,7 +20,7 @@ func HandleCreate(_args []string, workingPath string) error {
 
 	fs.Parse(_args)
 
-	filePath, err := create(workingPath, *ext, *title)
+	filePath, err := createFile(workingPath, fmt.Sprintf(".%s", *ext), *title)
 	if err != nil {
 		return err
 	}
@@ -29,6 +29,13 @@ func HandleCreate(_args []string, workingPath string) error {
 		err = openInEditor(GlobalConfig.Editor, filePath)
 		if err != nil {
 			return fmt.Errorf("editor failed: %w", err)
+		}
+
+		if *title == "" {
+			err := modifyTitle(filePath)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -42,7 +49,7 @@ func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 
 	fs.Parse(_args)
 
-	filePath, err := create(workingPath, ext, *title)
+	filePath, err := createFile(workingPath, fmt.Sprintf(".%s", ext), *title)
 	if err != nil {
 		return err
 	}
@@ -52,48 +59,16 @@ func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 		if err != nil {
 			return fmt.Errorf("editor failed: %w", err)
 		}
+
+		if *title == "" {
+			err := modifyTitle(filePath)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
-}
-
-func create(workingPath, ext string, title string) (string, error) {
-	title = sanitizeFilename(title)
-	fileName := fmt.Sprintf("%s%s", notePrefixNow(), title)
-	if ext != "" {
-		fileName = fmt.Sprintf("%s.%s", fileName, ext)
-	}
-	filePath := path.Join(workingPath, fileName)
-
-	_, err := os.OpenFile(filePath, os.O_CREATE, 0744)
-	if err != nil {
-		return "", err
-	}
-
-	return filePath, nil
-}
-
-func sanitizeFilename(s string) string {
-	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
-	result := s
-
-	for _, char := range invalidChars {
-		result = strings.ReplaceAll(result, char, "-")
-	}
-
-	result = strings.Trim(result, " .")
-
-	result = strings.Join(strings.Fields(result), " ")
-
-	if len(result) > 100 {
-		result = result[:100]
-	}
-
-	if result == "" {
-		result = untitled
-	}
-
-	return result
 }
 
 func openInEditor(editor, filePath string) error {
@@ -114,10 +89,26 @@ func openInEditor(editor, filePath string) error {
 	cmd.Stderr = os.Stderr
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: false, // Không tạo process group mới
+		Setpgid: false,
 	}
 
 	return cmd.Run()
+}
+
+func modifyTitle(filePath string) error {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	if !scanner.Scan() {
+		return nil
+	}
+
+	title := strings.TrimSpace(scanner.Text())
+	return changeFileName(filePath, title)
 }
 
 func notePrefixNow() string {

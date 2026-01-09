@@ -113,11 +113,11 @@ func HandleCommand(args []string) error {
 	switch cmd {
 	case "ls", "list":
 		return HandleListNote(workingPath)
-	case "create":
+	case "c", "create":
 		return HandleCreate(args, workingPath)
 	case "spec-create":
 		return HandleCreateWithExt(args, workingPath, args[0])
-	case "open":
+	case "o", "open":
 		return HandleOpen(args[1:], workingPath)
 	}
 
