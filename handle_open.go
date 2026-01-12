@@ -32,7 +32,7 @@ func HandleOpen(_args []string, workingPath string) error {
 		noteIndex = indexValue - 1
 	}
 
-	notes, err := listNote(workingPath)
+	notes, err := ListNote(workingPath)
 	if err != nil {
 		return nil
 	}
@@ -43,9 +43,16 @@ func HandleOpen(_args []string, workingPath string) error {
 
 	filePath := path.Join(workingPath, notes[noteIndex].Name)
 
-	err = openInEditor(GlobalConfig.Editor, filePath)
+	err = OpenFileInEditor(GlobalConfig.Editor, filePath)
 	if err != nil {
 		return err
+	}
+
+	if notes[noteIndex].Title == UntitledTitle {
+		err := ModifyTitle(filePath)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

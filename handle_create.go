@@ -4,10 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
-	"syscall"
-	"time"
 
 	"github.com/spf13/pflag"
 )
@@ -20,19 +17,19 @@ func HandleCreate(_args []string, workingPath string) error {
 
 	fs.Parse(_args)
 
-	filePath, err := createFile(workingPath, fmt.Sprintf(".%s", *ext), *title)
+	filePath, err := CreateNote(workingPath, fmt.Sprintf("%s", *ext), *title)
 	if err != nil {
 		return err
 	}
 
 	if !*c {
-		err = openInEditor(GlobalConfig.Editor, filePath)
+		err = OpenFileInEditor(GlobalConfig.Editor, filePath)
 		if err != nil {
 			return fmt.Errorf("editor failed: %w", err)
 		}
 
 		if *title == "" {
-			err := modifyTitle(filePath)
+			err := ModifyTitle(filePath)
 			if err != nil {
 				return err
 			}
@@ -49,19 +46,19 @@ func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 
 	fs.Parse(_args)
 
-	filePath, err := createFile(workingPath, fmt.Sprintf(".%s", ext), *title)
+	filePath, err := CreateNote(workingPath, fmt.Sprintf("%s", ext), *title)
 	if err != nil {
 		return err
 	}
 
 	if !*c {
-		err = openInEditor(GlobalConfig.Editor, filePath)
+		err = OpenFileInEditor(GlobalConfig.Editor, filePath)
 		if err != nil {
 			return fmt.Errorf("editor failed: %w", err)
 		}
 
 		if *title == "" {
-			err := modifyTitle(filePath)
+			err := ModifyTitle(filePath)
 			if err != nil {
 				return err
 			}
@@ -71,31 +68,8 @@ func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 	return nil
 }
 
-func openInEditor(editor, filePath string) error {
-	parts := strings.Fields(editor)
-	if len(parts) == 0 {
-		return fmt.Errorf("empty editor command")
-	}
 
-	var cmd *exec.Cmd
-	if len(parts) > 1 {
-		cmd = exec.Command(parts[0], append(parts[1:], filePath)...)
-	} else {
-		cmd = exec.Command(parts[0], filePath)
-	}
-
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: false,
-	}
-
-	return cmd.Run()
-}
-
-func modifyTitle(filePath string) error {
+func ModifyTitle(filePath string) error {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return err
@@ -108,10 +82,5 @@ func modifyTitle(filePath string) error {
 	}
 
 	title := strings.TrimSpace(scanner.Text())
-	return changeFileName(filePath, title)
-}
-
-func notePrefixNow() string {
-	now := time.Now().Format("150405")
-	return fmt.Sprintf("note%s:", now)
+	return ChangeTitle(filePath, title)
 }

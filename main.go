@@ -2,9 +2,13 @@ package main
 
 import (
 	"os"
+	"time"
 )
 
-var GlobalConfig *Config
+var (
+	GlobalConfig *Config
+	GlobalWorkingTime time.Time
+)
 
 func main() {
 	var err error

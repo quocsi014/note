@@ -3,8 +3,8 @@ package main
 const (
 	appName           = "note"
 
-	notePrefixPattern = `^note\d{6}:.*`
-	notePrefixLength  = 11
+	notePrefixPattern = `^note\d{6}::.*`
+	notePrefixLength  = 12
 
 	untitled = "Untitled"
 )

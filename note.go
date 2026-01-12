@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/spf13/pflag"
 )
 
 type NoteType uint8
@@ -30,6 +31,11 @@ var extToNoteType = map[string]NoteType{
 	"md":       NoteTypeMarkdown,
 	"json":     NoteTypeJSON,
 }
+
+const (
+	NoteFileNameTemplate = "%s::%s" // prefix::untitled::name.ext
+	UntitledTitle        = "Untitled"
+)
 
 var supportedExt = func() []string {
 	keys := make([]string, 0, len(extToNoteType))
@@ -84,42 +90,89 @@ func WorkingDir(daysAgo *int) string {
 	return workingTime.Format("02012006")
 }
 
-func HandleCommand(args []string) error {
-	fs := pflag.NewFlagSet("handle", pflag.ContinueOnError)
-	daysAgo := fs.IntP("ago", "a", 0, "")
-	fs.ParseErrorsAllowlist.UnknownFlags = true
+func CreateNote(workingPath, ext, title string) (string, error) {
+	fileName := CreateFileName(title, ext)
+	filePath := path.Join(workingPath, fileName)
 
-	err := fs.Parse(args)
+	_, err := os.OpenFile(filePath, os.O_CREATE, 0744)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	workingDir := WorkingDir(daysAgo)
-	workingPath := path.Join(GlobalConfig.StorageDir, workingDir)
+	return filePath, nil
+}
 
-	os.MkdirAll(workingPath, 0744)
+func CreateFileName(title, ext string) string {
+	title = sanitizeFilename(title)
 
-	var cmd string
-	if len(fs.Args()) == 0 {
-		cmd = "create"
-	} else {
-		cmd = args[0]
+	if title == "" {
+		title = UntitledTitle
 	}
 
-	if slices.Contains(supportedExt, cmd) {
-		cmd = "spec-create"
+	fileName := fmt.Sprintf("%s::%s", notePrefixNow(), title)
+	if ext != "" {
+		fileName = fmt.Sprintf("%s.%s", fileName, ext)
 	}
 
-	switch cmd {
-	case "ls", "list":
-		return HandleListNote(workingPath)
-	case "c", "create":
-		return HandleCreate(args, workingPath)
-	case "spec-create":
-		return HandleCreateWithExt(args, workingPath, args[0])
-	case "o", "open":
-		return HandleOpen(args[1:], workingPath)
+	return fileName
+}
+
+func ChangeTitle(relativePath string, title string) error {
+	ext := filepath.Ext(relativePath)
+	if len(ext) > 0 {
+		ext = ext[1:]
 	}
 
-	return nil
+	fileName := CreateFileName(title, ext)
+
+	dir, _ := filepath.Split(relativePath)
+	newPath := filepath.Join(dir, fileName)
+
+	return os.Rename(relativePath, newPath)
+}
+
+func notePrefixNow() string {
+	now := time.Now().Format("150405")
+	return fmt.Sprintf("note%s", now)
+}
+
+func ListNote(workingPath string) ([]*Note, error) {
+	files, err := os.ReadDir(workingPath)
+	if err != nil {
+		return nil, err
+	}
+
+	notes := make([]*Note, 0, len(files))
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+
+		reg, err := regexp.Compile(notePrefixPattern)
+		if err != nil {
+			return nil, err
+		}
+
+		isNote := reg.Match([]byte(f.Name()))
+		if !isNote {
+			continue
+		}
+
+		inf, err := f.Info()
+		if err != nil {
+			return nil, err
+		}
+
+		notes = append(notes, fileToNote(inf))
+	}
+
+	slices.SortFunc(notes, func(a, b *Note) int {
+		if a.ModifiedAt.After(b.ModifiedAt) {
+			return 1
+		} else {
+			return -1
+		}
+	})
+
+	return notes, nil
 }
