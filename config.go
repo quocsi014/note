@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path"
 )
@@ -57,7 +58,7 @@ func expandHome(p string) string {
 func LoadConfig() (*Config, error) {
 	configDir, err := getConfigDir()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get config directory: %w", err)
 	}
 
 	configFilePath := path.Join(configDir, "config.jsonc")
@@ -68,14 +69,14 @@ func LoadConfig() (*Config, error) {
 			return DefaultConfig(), nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("failed to read config file (%s): %w", configFilePath, err)
 	}
 
 	config := &Config{}
 
 	err = json.Unmarshal(raw, config)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse config JSON: %w", err)
 	}
 
 	config.process()

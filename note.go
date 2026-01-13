@@ -96,7 +96,7 @@ func CreateNote(workingPath, ext, title string) (string, error) {
 
 	_, err := os.OpenFile(filePath, os.O_CREATE, 0744)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to create file %s: %w", filePath, err)
 	}
 
 	return filePath, nil
@@ -128,7 +128,11 @@ func ChangeTitle(relativePath string, title string) error {
 	dir, _ := filepath.Split(relativePath)
 	newPath := filepath.Join(dir, fileName)
 
-	return os.Rename(relativePath, newPath)
+	err := os.Rename(relativePath, newPath)
+	if err != nil {
+		return fmt.Errorf("failed to rename file from %s to %s: %w", relativePath, newPath, err)
+	}
+	return nil
 }
 
 func notePrefixNow() string {
@@ -139,7 +143,7 @@ func notePrefixNow() string {
 func ListNote(workingPath string) ([]*Note, error) {
 	files, err := os.ReadDir(workingPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read directory %s: %w", workingPath, err)
 	}
 
 	notes := make([]*Note, 0, len(files))

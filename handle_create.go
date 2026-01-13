@@ -15,23 +15,26 @@ func HandleCreate(_args []string, workingPath string) error {
 	ext := fs.StringP("ext", "e", "", "")
 	c := fs.BoolP("c", "c", false, "")
 
-	fs.Parse(_args)
+	err := fs.Parse(_args)
+	if err != nil {
+		return fmt.Errorf("failed to parse flags: %w", err)
+	}
 
 	filePath, err := CreateNote(workingPath, fmt.Sprintf("%s", *ext), *title)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create note: %w", err)
 	}
 
 	if !*c {
 		err = OpenFileInEditor(GlobalConfig.Editor, filePath)
 		if err != nil {
-			return fmt.Errorf("editor failed: %w", err)
+			return fmt.Errorf("failed to open editor (%s): %w", GlobalConfig.Editor, err)
 		}
 
 		if *title == "" {
 			err := ModifyTitle(filePath)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to update note title: %w", err)
 			}
 		}
 	}
@@ -44,23 +47,26 @@ func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 	title := fs.StringP("title", "t", "", "")
 	c := fs.BoolP("c", "c", false, "")
 
-	fs.Parse(_args)
+	err := fs.Parse(_args)
+	if err != nil {
+		return fmt.Errorf("failed to parse flags: %w", err)
+	}
 
 	filePath, err := CreateNote(workingPath, fmt.Sprintf("%s", ext), *title)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create note with ext %s: %w", ext, err)
 	}
 
 	if !*c {
 		err = OpenFileInEditor(GlobalConfig.Editor, filePath)
 		if err != nil {
-			return fmt.Errorf("editor failed: %w", err)
+			return fmt.Errorf("failed to open editor (%s): %w", GlobalConfig.Editor, err)
 		}
 
 		if *title == "" {
 			err := ModifyTitle(filePath)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to update note title: %w", err)
 			}
 		}
 	}
@@ -72,7 +78,7 @@ func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 func ModifyTitle(filePath string) error {
 	f, err := os.Open(filePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open file for title modification: %w", err)
 	}
 	defer f.Close()
 
@@ -82,5 +88,9 @@ func ModifyTitle(filePath string) error {
 	}
 
 	title := strings.TrimSpace(scanner.Text())
-	return ChangeTitle(filePath, title)
+	err = ChangeTitle(filePath, title)
+	if err != nil {
+		return fmt.Errorf("failed to change title: %w", err)
+	}
+	return nil
 }

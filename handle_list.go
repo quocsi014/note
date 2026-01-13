@@ -24,7 +24,7 @@ func fileToNote(inf fs.FileInfo) *Note {
 func HandleListNote(workingPath string) error {
 	notes, err := ListNote(workingPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to list notes: %w", err)
 	}
 
 	titleLenMax := 40

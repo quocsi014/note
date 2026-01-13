@@ -22,7 +22,7 @@ func HandleOpen(_args []string, workingPath string) error {
 		var atoiErr error
 		indexValue, atoiErr = strconv.Atoi(fs.Args()[0])
 		if atoiErr != nil {
-			return fmt.Errorf("Unknow command: %s", fs.Args()[0])
+			return fmt.Errorf("invalid note index: %w", atoiErr)
 		}
 	}
 
@@ -34,7 +34,7 @@ func HandleOpen(_args []string, workingPath string) error {
 
 	notes, err := ListNote(workingPath)
 	if err != nil {
-		return nil
+		return fmt.Errorf("failed to list notes: %w", err)
 	}
 
 	if noteIndex < 0 || noteIndex > len(notes)-1 {

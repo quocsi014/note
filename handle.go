@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"slices"
@@ -16,7 +17,7 @@ func HandleCommand(args []string) error {
 
 	err := fs.Parse(args)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse flags: %w", err)
 	}
 
 	now := time.Now()
