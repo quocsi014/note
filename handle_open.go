@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/spf13/pflag"
@@ -41,7 +41,7 @@ func HandleOpen(_args []string, workingPath string) error {
 		noteIndex = len(notes) - 1
 	}
 
-	filePath := path.Join(workingPath, notes[noteIndex].Name)
+	filePath := filepath.Join(workingPath, notes[noteIndex].Name)
 
 	err = OpenFileInEditor(GlobalConfig.Editor, filePath)
 	if err != nil {

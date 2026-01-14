@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -92,7 +91,7 @@ func WorkingDir(daysAgo *int) string {
 
 func CreateNote(workingPath, ext, title string) (string, error) {
 	fileName := CreateFileName(title, ext)
-	filePath := path.Join(workingPath, fileName)
+	filePath := filepath.Join(workingPath, fileName)
 
 	_, err := os.OpenFile(filePath, os.O_CREATE, 0744)
 	if err != nil {

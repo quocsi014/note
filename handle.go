@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"slices"
 	"time"
 
@@ -25,7 +25,7 @@ func HandleCommand(args []string) error {
 	GlobalWorkingTime = workingTime
 
 	workingDir := workingTime.Format("02012006")
-	workingPath := path.Join(GlobalConfig.StorageDir, workingDir)
+	workingPath := filepath.Join(GlobalConfig.StorageDir, workingDir)
 
 	os.MkdirAll(workingPath, 0744)
 

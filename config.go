@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
+	"runtime"
 )
 
 type Config struct {
@@ -15,7 +16,11 @@ type Config struct {
 
 func (c *Config) process() {
 	if c.Editor == "" {
-		c.Editor = "vi"
+		if runtime.GOOS == "windows" {
+			c.Editor = "notepad"
+		} else {
+			c.Editor = "vi"
+		}
 	}
 
 	if c.StorageDir == "" {
@@ -42,7 +47,7 @@ func getConfigDir() (string, error) {
 		return "", err
 	}
 
-	configDir = path.Join(configDir, appName)
+	configDir = filepath.Join(configDir, appName)
 
 	return configDir, nil
 }
@@ -50,7 +55,11 @@ func getConfigDir() (string, error) {
 func expandHome(p string) string {
 	if len(p) > 0 && p[0] == '~' {
 		home, _ := os.UserHomeDir()
-		return path.Join(home, p[1:])
+		suffix := p[1:]
+		if len(suffix) > 0 && (suffix[0] == '/' || suffix[0] == '\\') {
+			suffix = suffix[1:]
+		}
+		return filepath.Join(home, suffix)
 	}
 	return p
 }
@@ -61,7 +70,7 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("failed to get config directory: %w", err)
 	}
 
-	configFilePath := path.Join(configDir, "config.jsonc")
+	configFilePath := filepath.Join(configDir, "config.jsonc")
 
 	raw, err := os.ReadFile(configFilePath)
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 )
 
 func OpenFileInEditor(editor, filePath string) error {
@@ -24,10 +23,6 @@ func OpenFileInEditor(editor, filePath string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: false,
-	}
 
 	return cmd.Run()
 }
