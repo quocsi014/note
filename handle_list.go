@@ -71,5 +71,5 @@ func printTitle() {
 		return
 	}
 
-	fmt.Printf("Notes dated %s\n", GlobalWorkingTime.Format("02 Jan"))	
+	fmt.Printf("Notes dated %s\n", GlobalWorkingTime.Format("02 Jan"))
 }

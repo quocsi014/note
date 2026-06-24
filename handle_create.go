@@ -74,7 +74,6 @@ func HandleCreateWithExt(_args []string, workingPath string, ext string) error {
 	return nil
 }
 
-
 func ModifyTitle(filePath string) error {
 	f, err := os.Open(filePath)
 	if err != nil {

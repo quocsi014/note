@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	GlobalConfig *Config
+	GlobalConfig      *Config
 	GlobalWorkingTime time.Time
 )
 

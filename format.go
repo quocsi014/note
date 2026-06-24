@@ -23,4 +23,3 @@ func TimeSince(t time.Time) string {
 		return fmt.Sprintf("%dy", int(d.Hours()/(24*365)))
 	}
 }
-
